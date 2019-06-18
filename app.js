@@ -4,7 +4,7 @@ const fs = require('fs');
 var ip = require("ip");
 var isAlphanumeric = require('is-alphanumeric');
 var session = require('express-session');
-
+const bodyParser = require('body-parser');
 var global_increment=0;
 var connection = sql.createConnection({
   host     : 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
@@ -13,7 +13,8 @@ var connection = sql.createConnection({
   database : 'userdb'
 });
 var app = express();
-
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json()) ;
 app.use(session({
 
 secret: 'my express secret',
@@ -36,23 +37,36 @@ if(!err) {
 Register users
 ***/
 app.post("/registerUser",function(req,res){
-
-  var username = req.param('username');
-  var password = req.param('password');
-  var fname = req.param('fname');
-  var lname = req.param('lname');
-  var address = req.param('address');
-  var city = req.param('city');
-  var state = req.param('state');
-  var zip = req.param('zip');
-  var email = req.param('email');
+console.log('register');
+  var username = req.body.username;
+  var password = req.body.password;
+  var fname = req.body.fname;
+  var lname = req.body.lname;
+  var address = req.body.address;
+  var city = req.body.city;
+  var state = req.body.state;
+  var zip = req.body.zip;
+  var email = req.body.email;
+  if(!username){
+    res.send({"message":"The input you provided is not valid"});
+  }
+  else{
+    console.log(username +" is the user who has to be registered");
   connection.query('SELECT * from userinfo where username=?',[username],function(err,rows,fields){
     if(!err){
       //Already in db or one of the parameters is missing
-      if(rows.length!=0||!username||!password||!fname||!lname||!address||!city||!state||!zip||!email)
+      console.log(username +" is the user who has to be registered");
+      console.log('no querying error for select *');
+
+      if(rows.length!=0||!password||!fname||!lname||!address||!city||!state||!zip||!email){
+
+
+        console.log('either already in db or missing parameters');
         res.send({"message":"The input you provided is not valid"});
+        }
       else {
           //add to db
+          console.log('all values provided');
           connection.query('INSERT INTO userinfo(fname,lname,address,city,state,zip,email,username,password) VALUES (?,?,?,?,?,?,?,?,?)',[fname,lname,address,city,state,zip,email,username,password],function(err,result){
             if(err)
               throw err;
@@ -69,14 +83,16 @@ app.post("/registerUser",function(req,res){
       res.send("Querying Error");
     }
   });
+  }
+
 });
 
 /***
 Login Functionality
 ***/
 app.post("/login",function(req,res){
-var uname = req.param('username');
-var pw = req.param('password');
+var uname = req.body.username;
+var pw = req.body.password;
 var fname;
 var ret;
 console.log('login');
@@ -89,9 +105,11 @@ connection.query('SELECT * from userinfo where username = ?',[uname], function(e
   }
   else{
     if(rows.length==0){//username does not exist
+      console.log('username does not exist');
       res.send({"message":"There seems to be an issue with the username/password combination that you entered"});
     }
     else{//username exists,validate password
+      console.log('username exists');
       if(rows[0].password==pw){//password matches
         console.log('User has been validated');
         fname=rows[0].fname;
@@ -122,6 +140,7 @@ Logout Functionality
 ***/
 
 app.post('/logout', function(req, res){
+  console.log('logout');
   if(req.session.loginstatus == true){
     if(req.session.isAdmin==true){
       req.session.isAdmin=false;
@@ -138,15 +157,16 @@ app.post('/logout', function(req, res){
 Update user information
 ***/
 app.post('/updateInfo',function(req,res){
-  var username = req.param('username');
-  var password = req.param('password');
-  var fname = req.param('fname');
-  var lname = req.param('lname');
-  var address = req.param('address');
-  var city = req.param('city');
-  var state = req.param('state');
-  var zip = req.param('zip');
-  var email = req.param('email');
+  console.log('update');
+  var username = req.body.username;
+  var password = req.body.password;
+  var fname = req.body.fname;
+  var lname = req.body.lname;
+  var address = req.body.address;
+  var city = req.body.city;
+  var state = req.body.state;
+  var zip = req.body.zip;
+  var email = req.body.email;
 
   if(req.session.loginstatus==false||req.session.loginstatus==undefined){
     res.send({"message":"You are not currently logged in"});
@@ -277,10 +297,11 @@ app.post('/updateInfo',function(req,res){
 Add products
 ***/
 app.post('/addProducts',function(req,res){
-  var asin = req.param('asin');
-  var pname = req.param('productName');
-  var pdes = req.param('productDescription');
-  var pgroup = req.param('group');
+  console.log('addProducts');
+  var asin = req.body.asin;
+  var pname = req.body.productName;
+  var pdes = req.body.productDescription;
+  var pgroup = req.body.group;
   if(req.session.loginstatus==false||req.session.loginstatus==undefined){
     res.send({"message":"You are not currently logged in"});
   }
@@ -320,10 +341,11 @@ app.post('/addProducts',function(req,res){
 Modify a product based on asin
 ***/
 app.post('/modifyProduct',function(req,res){
-  var asin = req.param('asin');
-  var pname = req.param('productName');
-  var pdes = req.param('productDescription');
-  var pgroup = req.param('group');
+  console.log('modifyProduct');
+  var asin = req.body.asin;
+  var pname = req.body.productName;
+  var pdes = req.body.productDescription;
+  var pgroup = req.body.group;
   if(req.session.loginstatus==false||req.session.loginstatus==undefined){
     res.send({"message":"You are not currently logged in"});
   }
@@ -362,8 +384,9 @@ app.post('/modifyProduct',function(req,res){
 View Users of the system
 ***/
 app.post("/viewUsers",function(req,res){
-  var fname=req.param('fname');
-  var lname=req.param('lname');
+  console.log('view users');
+  var fname=req.body.fname;
+  var lname=req.body.lname;
   if(!req.session.loginstatus||req.session.loginstatus==undefined){
     res.send({"message":"You are not currently logged in"});
   }
@@ -457,9 +480,10 @@ app.post("/viewUsers",function(req,res){
 View the products in the system
 ***/
 app.post("/viewProducts",function(req,res){
-  var asin=req.param('asin');
-  var keyword=req.param('keyword');
-  var pgroup = req.param('group');
+  console.log('view products');
+  var asin=req.body.asin;
+  var keyword=req.body.keyword;
+  var pgroup = req.body.group;
   if(!asin){
     asin='';
   }
