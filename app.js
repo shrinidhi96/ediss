@@ -53,7 +53,7 @@ app.post("/registerUser",function(req,res){
         res.send({"message":"The input you provided is not valid"});
       else {
           //add to db
-          connection.query('INSERT INTO userinfo VALUES (?,?,?,?,?,?,?,?,?)',[fname,lname,address,city,state,zip,email,username,password],function(err,result){
+          connection.query('INSERT INTO userinfo(fname,lname,address,city,state,zip,email,username,password) VALUES (?,?,?,?,?,?,?,?,?)',[fname,lname,address,city,state,zip,email,username,password],function(err,result){
             if(err)
               throw err;
             else{
@@ -71,50 +71,44 @@ app.post("/registerUser",function(req,res){
   });
 });
 
-
-
+/***
+Login Functionality
+***/
 app.post("/login",function(req,res){
 var uname = req.param('username');
 var pw = req.param('password');
 var fname;
 var ret;
 connection.query('SELECT * from userinfo where username = ?',[uname], function(err, rows, fields) {
-
-  if (!err){
-
-    if(pw==rows[0].password){
-      console.log('User has been validated');
-      fname = rows[0].fname;
-      if(uname=='jadmin'){
-        req.session.isAdmin = true;
-      }
-      else {
-        req.session.isAdmin = false;
-      }
-      req.session.loginstatus=true;
-      req.session.username=uname;
-      req.session.firstname=fname;
-      ret = {"message":"Welcome "+fname};
-
-    }
-    else {
-      ret = {"message":"There seems to be an issue with the username/password combination that you entered"};
-
-    }
-    res.send(ret);
-
-  }
-
-  else{
-    console.log('Error while performing Query.');
+  if(err){
     res.send("Querying Error");
   }
-
-  });
-
-
+  else{
+    if(rows.length==0){//username does not exist
+      res.send({"message":"There seems to be an issue with the username/password combination that you entered"});
+    }
+    else{//username exists,validate password
+      if(rows[0].password==pw){//password matches
+        console.log('User has been validated');
+        fname=rows[0].fname;
+        if(uname=='jadmin'){//This person is an admin
+          req.session.isAdmin=true;
+        }
+        else{//Not an admin
+          req.session.isAdmin=false;
+        }
+        req.session.loginstatus=true;
+        req.session.username=uname;
+        req.session.firstname=fname;
+        res.send({"message":"Welcome "+fname});
+      }
+    }
+  }
 });
-
+});
+/***
+Logout Functionality
+***/
 
 app.post('/logout', function(req, res){
   if(req.session.loginstatus == true){
@@ -129,7 +123,9 @@ app.post('/logout', function(req, res){
     res.send({"message":"You are not currently logged in"});
   }
 });
-
+/***
+Update user information
+***/
 app.post('/updateInfo',function(req,res){
   var username = req.param('username');
   var password = req.param('password');
@@ -309,7 +305,9 @@ app.post('/addProducts',function(req,res){
     res.send({"message":"You must be an admin to perform this action"});
   }
 });
-
+/***
+Modify a product based on asin
+***/
 app.post('/modifyProduct',function(req,res){
   var asin = req.param('asin');
   var pname = req.param('productName');
@@ -349,9 +347,10 @@ app.post('/modifyProduct',function(req,res){
     res.send({"message":"You must be an admin to perform this action"});
   }
 });
-
+/***
+View Users of the system
+***/
 app.post("/viewUsers",function(req,res){
-  //SELECT * FROM userinfo WHERE fname LIKE '%${fname}%' AND lname LIKE '%${lname}%'
   var fname=req.param('fname');
   var lname=req.param('lname');
   if(!req.session.loginstatus||req.session.loginstatus==undefined){
@@ -443,9 +442,10 @@ app.post("/viewUsers",function(req,res){
     }
   }
 });
-
+/***
+View the products in the system
+***/
 app.post("/viewProducts",function(req,res){
-  //SELECT * FROM userinfo WHERE fname LIKE '%${fname}%' AND lname LIKE '%${lname}%'
   var asin=req.param('asin');
   var keyword=req.param('keyword');
   var pgroup = req.param('group');
