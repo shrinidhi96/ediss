@@ -102,6 +102,9 @@ connection.query('SELECT * from userinfo where username = ?',[uname], function(e
         req.session.firstname=fname;
         res.send({"message":"Welcome "+fname});
       }
+      else{//password does not match
+        res.send({"message":"There seems to be an issue with the username/password combination that you entered"});
+      }
     }
   }
 });
