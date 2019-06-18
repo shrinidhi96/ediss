@@ -79,6 +79,10 @@ var uname = req.param('username');
 var pw = req.param('password');
 var fname;
 var ret;
+console.log('login');
+if(uname&&pw){
+
+
 connection.query('SELECT * from userinfo where username = ?',[uname], function(err, rows, fields) {
   if(err){
     res.send("Querying Error");
@@ -108,6 +112,10 @@ connection.query('SELECT * from userinfo where username = ?',[uname], function(e
     }
   }
 });
+}
+else{
+  res.send({"message":"There seems to be an issue with the username/password combination that you entered"});
+}
 });
 /***
 Logout Functionality
