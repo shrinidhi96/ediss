@@ -316,18 +316,18 @@ app.post('/addProducts',function(req,res){
           res.send({"message":"The input you provided is not valid"});
         else {
             //add to db
-            if(pgroup.length>0){
-              for(var i =0; i<pgroup.length; i++){
-                connection.query('INSERT INTO products VALUES (?,?,?,?)',[asin,pname,pdes,pgroup[i]],function(err,result){
+          // if(pgroup.length>0){
+            // for(var i =0; i<pgroup.length; i++){
+                connection.query('INSERT INTO products VALUES (?,?,?,?)',[asin,pname,pdes,pgroup],function(err,result){
                   if(err)
                     throw err;
                   else{
                     console.log("1 record inserted into products");
                   }
                 });
-              }
-            }
-            else{
+              //}
+            //}
+            /*else{
               connection.query('INSERT INTO products VALUES (?,?,?,?)',[asin,pname,pdes,pgroup],function(err,result){
                 if(err)
                   throw err;
@@ -337,7 +337,7 @@ app.post('/addProducts',function(req,res){
 
                 }
               });
-            }
+            }*/
             var ret = {"message":pname+ " was successfully added to the system"};
             res.send(ret);
           }
