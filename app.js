@@ -316,15 +316,30 @@ app.post('/addProducts',function(req,res){
           res.send({"message":"The input you provided is not valid"});
         else {
             //add to db
-            connection.query('INSERT INTO products VALUES (?,?,?,?)',[asin,pname,pdes,pgroup],function(err,result){
-              if(err)
-                throw err;
-              else{
-                console.log("1 record inserted into products");
-                var ret = {"message":pname+ " was successfully added to the system"};
-                res.send(ret);
+            if(pgroup.length>0){
+              for(var i =0; i<pgroup.length; i++){
+                connection.query('INSERT INTO products VALUES (?,?,?,?)',[asin,pname,pdes,pgroup[i]],function(err,result){
+                  if(err)
+                    throw err;
+                  else{
+                    console.log("1 record inserted into products");
+                  }
+                });
               }
-            });
+            }
+            else{
+              connection.query('INSERT INTO products VALUES (?,?,?,?)',[asin,pname,pdes,pgroup],function(err,result){
+                if(err)
+                  throw err;
+                else{
+                  console.log("1 record inserted into products");
+                  //Move the 2 lines elsewhere
+
+                }
+              });
+            }
+            var ret = {"message":pname+ " was successfully added to the system"};
+            res.send(ret);
           }
       }
       else{
@@ -512,6 +527,260 @@ app.post("/viewProducts",function(req,res){
   }
 });
 });
+app.post("/dummy",function(req,res){
+  var count = req.body.count;
+  var promise = new Promise(function(resolve,reject){
+    while(count<6){
+      count++;
+    }
+    if(count>0)
+      resolve(count);
+    /*else {
+      reject
+    }*/
+  });
+
+  console.log("Count not inside then: "+count);
+  promise.then(function(value){
+    if(resolve){
+      console.log(value);
+      res.send('The final value of count from resolve: '+value);
+    }
+    else{
+      console.log('Within Reject');
+      res.send('The final value of count from reject: '+value);
+    }
+
+  });
+  //console.log('End of dummy!');
+
+
+
+
+});
+/***
+Buy Products
+***/
+
+app.post("/buyProducts",function(req,res){
+  var count = 0;var errc =0;
+  const products = req.body.products;
+  if(req.session.loginstatus){
+
+    console.log('Buy products');
+
+    var i;
+    if(!products){
+      res.send({"message":"There are no products that match that criteria"});
+    }
+    else{
+
+
+      for (i = 0; i < products.length ; i++){
+      const asin = products[i].asin;
+      var sql = "SELECT productName from products WHERE asin="+asin;
+      connection.query(sql,function(err,rows,fields){
+      if(!err){
+        if(rows.length==0){ //Invalid asin
+          errc++;
+          console.log({"message":"There are no products that match that criteria"});
+        //  console.log('Asin does not exist,   = '+ );
+        console.log('Errc = '+errc+' when i ='+i+' and count = '+count);
+          if(i==products.length && errc>=products.length)
+          {
+             res.send({"message":"There are no products that match that criteria"});
+          }
+
+        }
+        else{ //asin exists
+          //Get productName from the products TABLE
+          const pname = rows[0].productName
+          //Insert into orders TABLE
+          connection.query("INSERT INTO orders VALUES(?,?,?,?)",[pname,req.session.username,asin,1],function(err1,result){
+
+          if(!err1 && result!=null){
+              count++;
+              console.log('Errc in opposite and count in proper : '+errc+' '+count+' i='+i);
+              if(i==products.length && count>=products.length)
+              {
+                console.log('Value of count: '+count);
+                if(count!=products.length){
+                  ret = true;
+                  res.send({"message":"There are no products that match that criteria"});
+                }
+                else{
+                  console.log('Within 1st if');
+                  ret = true;
+                  res.send({"message":"The action was successful"});
+                }
+              }
+             if(i==products.length && errc>0 && (count+errc)==products.length){
+                  console.log('Within 2nd if, i = '+i);
+                  if(count<products.length && count>0){
+                    console.log('2 nd if if');
+                    ret = true;
+                    res.send({"message":"The action was successful"});
+                  } //partial case
+
+              }
+          }
+          else{
+              console.log('Error while performing Query.');
+          }
+
+
+          });
+        }
+      }
+      else{
+        console.log('Error while performing Query.');
+      }
+      });
+    } // end of for
+
+
+
+  }
+
+    for(i=0;i<products.length;i++){
+
+        const asin_one = products[i].asin;
+        for(var j=0; j<products.length;j++){ //Populate frequent_items
+
+            const asin_bought_with_one=products[j].asin;
+            if(asin_bought_with_one == asin_one){ //do not add
+              console.log('Same id');
+              continue;
+            }
+            else{
+              console.log('ASIN ONE: '+asin_one+' ASIN TWO: '+asin_bought_with_one);
+              var query = "SELECT * FROM frequent_items WHERE asin_one="+asin_one+" AND asin="+asin_bought_with_one;
+              connection.query(query,function(err,rows,fields){
+                if(!err){
+                  if(rows.length==0){
+                    var insertintotable = "INSERT INTO frequent_items VALUES(?,?,?)";
+                    connection.query(insertintotable,[asin_one,asin_bought_with_one,1],function(err,result){
+                        if(!err){
+                          console.log('Inserted into frequent_items');
+                        }
+                        else{
+                          console.log('Error while performing Query - frequent-items insert.')
+                        }
+                    });
+                  }
+                  else{
+                    var updatetable = "UPDATE frequent_items SET frequency=? WHERE asin_one=? AND asin=?";
+                    const frequency = rows[0].frequency;
+                    connection.query(updatetable,[frequency+1,asin_one,asin_bought_with_one],function(err,results){
+                      if(!err){
+                        console.log('Update successful in frequent_items');
+                      }
+                      else{
+                        console.log('Error while performing Query.- frequent-items update');
+                      }
+                    });
+                  }
+
+                }
+                else{
+                  console.log('Error while performing Query.');
+                }
+              });
+            }
+
+
+        }
+
+
+    }
+
+
+}
+else{
+  res.send({"message":"You are not currently logged in"});
+}
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***
+View purchased products by a given user
+***/
+app.post("/productsPurchased",function(req,res){
+  console.log('Products purchased');
+  const uname=req.body.username;
+  if(!uname){
+    res.send({"message":"There are no users that match that criteria"});
+  }
+  else if(!req.session.loginstatus||req.session.loginstatus==undefined){
+    res.send({"message":"You are not currently logged in"});
+  }
+  else if(!req.session.isAdmin){
+    res.send({"message":"You must be an admin to perform this action"});
+  }
+  else{//is an admin and is logged interval
+        connection.query("SELECT productName,quantity FROM orders WHERE userid=?",[uname],function(err,rows,fields){
+        if(!err){
+          if(rows.length==0){
+            res.send({"message":"There are no users that match that criteria"});
+          }
+          else{
+            console.log(rows);
+            res.send({"message":"The action was successful","products":rows});
+          }
+        }
+        else{
+          console.log('Error while performing Query.');
+          res.send("Querying Error");
+        }
+      });
+  }
+});
+
+/***
+Recommendation Engine
+***/
+app.post("/getRecommendations",function(req,res){
+  const asin_one = req.body.asin;
+  if(!req.session.loginstatus){
+    res.send({"message":"You are not currently logged in"});
+  }
+  else{
+    connection.query("SELECT asin FROM frequent_items WHERE asin_one=? ORDER BY frequency DESC LIMIT 5",[asin_one],function(err,rows,fields){
+      if(!err){
+        if(rows.length==0){
+          console.log('No product found!');
+          res.send({"message": "There are no recommendations for that product"});
+        }
+        else{
+          console.log('Product found!');
+          res.send({"message":"The action was successful","products":rows});
+        }
+      }
+      else{
+        console.log('Querying Error!')
+      }
+    });
+
+  }
+
+
+
+
+});
+
+
 app.listen(3000, () => {
  console.log("Server running on port 3000");
 });
