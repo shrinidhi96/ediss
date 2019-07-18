@@ -2,15 +2,13 @@ var express = require("express");
 var sql = require('mysql');
 const fs = require('fs');
 var ip = require("ip");
-var isAlphanumeric = require('is-alphanumeric');
 var session = require('express-session');
 const bodyParser = require('body-parser');
-var global_increment=0;
 var connection = sql.createConnection({
-  host     : 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
+  host     : 'localhost', //change url
   user     : 'root',
   password : 'password',
-  database : 'userdb'
+  database : 'users' //change to 'userdb' in production
 });
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -365,13 +363,18 @@ app.post('/modifyProduct',function(req,res){
     res.send({"message":"You are not currently logged in"});
   }
   if(req.session.isAdmin==true){
+    console.log("Your are an admin, and you are inside modify products");
     connection.query('SELECT * FROM products where asin=?',[asin],function(err,rows,fields){
       if(!err){
         //Not in DB or missing attributes
-        if(rows.length==0||!pname||!pdes||!pgroup||!asin)
+        if(rows.length==0||!pname||!pdes||!pgroup||!asin){
+          console.log("Your are an admin, and you are inside modify products, but no valid input");
           res.send({"message":"The input you provided is not valid"});
+        }
+
         else {
             //update
+            console.log("Your are an admin, and you are inside modify products, but yes valid input");
             connection.query('UPDATE products SET productName=?,productDescription=?,pgroup=? WHERE asin=?',[pname,pdes,pgroup,asin],function(err,result){
               if(err)
                 throw err;
@@ -752,6 +755,7 @@ app.post("/productsPurchased",function(req,res){
 Recommendation Engine
 ***/
 app.post("/getRecommendations",function(req,res){
+  console.log('Get recommendations');
   const asin_one = req.body.asin;
   if(!req.session.loginstatus){
     res.send({"message":"You are not currently logged in"});
