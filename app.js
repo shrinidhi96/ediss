@@ -5,11 +5,11 @@ var ip = require("ip");
 var session = require('express-session');
 const bodyParser = require('body-parser');
 var connection = sql.createConnection({
-  host     : 'localhost', //change url
-  user     : 'root',
-  password : 'password',
-  database : 'users' //change to 'userdb' in production
-});
+	  host     : 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
+	  user     : 'root',
+	  password : 'password',
+	  database : 'userdb'
+	});
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json()) ;
