@@ -511,24 +511,45 @@ app.post("/viewProducts",function(req,res){
   if(!pgroup){
     pgroup='';
   }
+  if(asin){
+    var sql = "SELECT asin,productName FROM products WHERE asin="+asin;
+    connection.query(sql,function(err,rows,fields){
+    //Do logic to convert rows to JSON and send it in response
+    if(!err){
+      if(rows.length==0){
+        res.send({"message":"There are no products that match that criteria"});
+      }
+      else{
+        res.send({"product":rows});
+      }
 
-  var sql = "SELECT asin,productName FROM products WHERE asin LIKE '%" +asin+"%' AND (productName LIKE '%"+keyword+"%' OR productDescription LIKE '%"+keyword+"%') AND pgroup LIKE '%"+pgroup+"%'";
-  connection.query(sql,function(err,rows,fields){
-  //Do logic to convert rows to JSON and send it in response
-  if(!err){
-    if(rows.length==0){
-      res.send({"message":"There are no products that match that criteria"});
     }
     else{
-      res.send({"product":rows});
+      console.log('Error while performing Query.');
+      res.send("Querying Error");
     }
-
+  });
   }
   else{
-    console.log('Error while performing Query.');
-    res.send("Querying Error");
+    var sql = "SELECT asin,productName FROM products WHERE asin LIKE '%" +asin+"%' AND (productName LIKE '%"+keyword+"%' OR productDescription LIKE '%"+keyword+"%') AND pgroup LIKE '%"+pgroup+"%'";
+    connection.query(sql,function(err,rows,fields){
+    //Do logic to convert rows to JSON and send it in response
+    if(!err){
+      if(rows.length==0){
+        res.send({"message":"There are no products that match that criteria"});
+      }
+      else{
+        res.send({"product":rows});
+      }
+
+    }
+    else{
+      console.log('Error while performing Query.');
+      res.send("Querying Error");
+    }
+  });
   }
-});
+
 });
 app.post("/dummy",function(req,res){
   var count = req.body.count;
