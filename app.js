@@ -3,6 +3,7 @@ var sql = require('mysql');
 const fs = require('fs');
 var ip = require("ip");
 var session = require('express-session');
+var MySQLStore = require('express-mysql-session')(session);
 const bodyParser = require('body-parser');
 var connection = sql.createConnection({
 	  host     : 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
@@ -10,21 +11,26 @@ var connection = sql.createConnection({
 	  password : 'password',
 	  database : 'userdb'
 	});
-var redis   = require("redis");
-var redisStore = require('connect-redis')(session);
-var client  = redis.createClient();
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json()) ;
-app.use(session({
+const sessionStore = new MySQLStore({
+host: 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
+    port: 3306,
+    user: 'root',
+    password: 'password',
+database: 'userdb',
+expiration: 900000,
+createDatabaseTable: true,
 
+}, connection);
+app.use(session({
 secret: 'my express secret',
 saveUninitialized: true,
 resave: true,
 rolling: true,
 maxAge: 900000,
-store: new redisStore({ host: 'localhost', port: 6379, client: client,ttl :  260}) //change url
-
+store: sessionStore //change url
 }));
 
 connection.connect(function(err){
