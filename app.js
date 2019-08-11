@@ -23,7 +23,7 @@ saveUninitialized: true,
 resave: true,
 rolling: true,
 maxAge: 900000,
-store: new redisStore({ host: 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com', port: 6379, client: client,ttl :  260}) //change url
+store: new redisStore({ host: 'localhost', port: 6379, client: client,ttl :  260}) //change url
 
 }));
 
