@@ -10,6 +10,9 @@ var connection = sql.createConnection({
 	  password : 'password',
 	  database : 'userdb'
 	});
+var redis   = require("redis");
+var redisStore = require('connect-redis')(session);
+var client  = redis.createClient();
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json()) ;
@@ -19,7 +22,8 @@ secret: 'my express secret',
 saveUninitialized: true,
 resave: true,
 rolling: true,
-maxAge: 900000
+maxAge: 900000,
+store: new redisStore({ host: 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com', port: 6379, client: client,ttl :  260}) //change url
 
 }));
 
