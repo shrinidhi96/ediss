@@ -415,10 +415,10 @@ app.post("/viewUsers",function(req,res){
   console.log('view users');
   var fname=req.body.fname;
   var lname=req.body.lname;
-  if(!req.session.loginstatus||req.session.loginstatus==undefined){
+  if(req.session.loginstatus==false||req.session.loginstatus==undefined){
     res.send({"message":"You are not currently logged in"});
   }
-  else if(!req.session.isAdmin){
+  else if(req.session.isAdmin==false){
     res.send({"message":"You must be an admin to perform this action"});
   }
   else{//is an admin and is logged interval
@@ -599,7 +599,7 @@ Buy Products
 app.post("/buyProducts",function(req,res){
   var count = 0;var errc =0;
   const products = req.body.products;
-  if(req.session.loginstatus){
+  if(req.session.loginstatus==true){
 
     console.log('Buy products');
 
@@ -757,10 +757,10 @@ app.post("/productsPurchased",function(req,res){
   if(!uname){
     res.send({"message":"There are no users that match that criteria"});
   }
-  else if(!req.session.loginstatus||req.session.loginstatus==undefined){
+  else if(req.session.loginstatus==false||req.session.loginstatus==undefined){
     res.send({"message":"You are not currently logged in"});
   }
-  else if(!req.session.isAdmin){
+  else if(req.session.isAdmin==false){
     res.send({"message":"You must be an admin to perform this action"});
   }
   else{//is an admin and is logged interval
@@ -788,7 +788,7 @@ Recommendation Engine
 app.post("/getRecommendations",function(req,res){
   console.log('Get recommendations');
   const asin_one = req.body.asin;
-  if(!req.session.loginstatus){
+  if(req.session.loginstatus==false){
     res.send({"message":"You are not currently logged in"});
   }
   else{
