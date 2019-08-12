@@ -9,6 +9,7 @@ var connection = sql.createConnection({
   user     : 'root',
   password : 'password',
   database : 'userdb' //change to 'userdb' in production
+  multipleStatements: 'true'
 });
 const sessionStore = new MySQLStore({
 host: 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
@@ -23,6 +24,14 @@ createDatabaseTable: true,
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json()) ;
+
+connection.connect(function(err){
+if(!err) {
+    console.log("Database is connected ...");
+} else {
+    console.log("Error connecting database ...");
+}
+});
 app.use(session({
 
 secret: 'my express secret',
@@ -32,15 +41,6 @@ rolling: true,
 maxAge: 900000,
 store: sessionStore //change url
 }));
-
-
-connection.connect(function(err){
-if(!err) {
-    console.log("Database is connected ...");
-} else {
-    console.log("Error connecting database ...");
-}
-});
 
 /***
 Register users
