@@ -1,6 +1,5 @@
 var express = require("express");
 var sql = require('mysql');
-var redis   = require("redis");
 var session = require('express-session');
 const bodyParser = require('body-parser');
 const MySQLStore = require('express-mysql-session')(session);
@@ -9,7 +8,6 @@ var connection = sql.createConnection({
   user     : 'root',
   password : 'password',
   database : 'userdb' //change to 'userdb' in production
-  multipleStatements: 'true'
 });
 const sessionStore = new MySQLStore({
 host: 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
