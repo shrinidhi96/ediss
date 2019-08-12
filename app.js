@@ -1,36 +1,28 @@
+//START
 var express = require("express");
 var sql = require('mysql');
-const fs = require('fs');
-var ip = require("ip");
+var redis   = require("redis");
 var session = require('express-session');
-var MySQLStore = require('express-mysql-session')(session);
 const bodyParser = require('body-parser');
+var redisStore = require('connect-redis')(session);
+var client  = redis.createClient();
 var connection = sql.createConnection({
-	  host     : 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
-	  user     : 'root',
-	  password : 'password',
-	  database : 'userdb'
-	});
+  host     : 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com', //change url
+  user     : 'root',
+  password : 'password',
+  database : 'userdb' //change to 'userdb' in production
+});
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json()) ;
-const sessionStore = new MySQLStore({
-host: 'userdb.c75hsef0b9wp.us-east-1.rds.amazonaws.com',
-    port: 3306,
-    user: 'root',
-    password: 'password',
-database: 'userdb',
-expiration: 900000,
-createDatabaseTable: true,
-
-}, connection);
 app.use(session({
+
 secret: 'my express secret',
 saveUninitialized: true,
 resave: true,
 rolling: true,
 maxAge: 900000,
-store: sessionStore //change url
+store: new redisStore({ host: 'myredisstore-001.tmwlry.0001.use1.cache.amazonaws.com:6379', port: 6379, client: client,ttl :260}) //change url
 }));
 
 connection.connect(function(err){
